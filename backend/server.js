@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -48,15 +49,27 @@ app.use(express.json());
 // Ensure preflight OPTIONS requests get CORS headers immediately
 app.options('*', cors(corsOptions));
 
-// ✅ Health check BEFORE connecting to database
+// Health route (already present)
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     success: true,
     message: 'Welcome to 21C Fitness Hub API',
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString()
   });
 });
+
+// Serve frontend build when deployed as a single Web Service
+if (process.env.NODE_ENV === 'production') {
+  const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+  app.use(express.static(frontendDist));
+
+  // Keep API routes working and fallback other requests to index.html
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    return res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 // ✅ Connect to MongoDB with error handling
 connectDB()
