@@ -65,6 +65,8 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
+    // add detailed logging for debugging in Render logs
+    console.error('AuthController.login error:', error.stack || error);
     res.status(500).json({ 
       success: false, 
       message: error.message 
