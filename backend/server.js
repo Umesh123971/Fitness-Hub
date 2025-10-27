@@ -89,9 +89,25 @@ app.use((req, res) => {
   });
 });
 
-// ✅ Start server (keeps existing startServer implementation)
+// --- Add startServer implementation and start server ---
 const PORT = parseInt(process.env.PORT || '5000', 10);
 let server = null;
+
+const startServer = (port) => {
+  server = app.listen(port, '0.0.0.0', () => {
+    console.log(`✅ Server running on port ${port} (env: ${process.env.NODE_ENV || 'development'})`);
+  });
+
+  server.on('error', (error) => {
+    if (error && error.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${port} is already in use`);
+    } else {
+      console.error('❌ Server error:', error);
+    }
+    process.exit(1);
+  });
+};
+
 startServer(PORT);
 
 // ✅ Graceful shutdown
