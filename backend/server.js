@@ -49,7 +49,7 @@ app.use(express.json());
 // Ensure preflight OPTIONS requests get CORS headers immediately
 app.options('*', cors(corsOptions));
 
-// Health route (already present)
+// --- Move health route & production static serving OUTSIDE DB gating so we always respond ---
 app.get('/', (req, res) => {
   res.json({
     success: true,
@@ -59,53 +59,51 @@ app.get('/', (req, res) => {
   });
 });
 
-// Serve frontend build when deployed as a single Web Service
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
   app.use(express.static(frontendDist));
-
-  // Keep API routes working and fallback other requests to index.html
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     return res.sendFile(path.join(frontendDist, 'index.html'));
   });
 }
+// --- end always-available handlers ---
 
-// ✅ Connect to MongoDB with error handling
+// Connect to MongoDB but DO NOT gate route registration on success
 connectDB()
   .then(() => {
     console.log('✅ MongoDB Connected Successfully');
-    
-    // Routes - only register after DB connection
-    app.use('/api/auth', require('./routes/authRoutes'));
-    app.use('/api/members', require('./routes/memberRoutes'));
-    app.use('/api/trainers', require('./routes/trainerRoutes'));
-    app.use('/api/classes', require('./routes/classRoutes'));
-    app.use('/api/bookings', require('./routes/bookingRoutes'));
-    app.use('/api/payments', require('./routes/paymentRoutes'));
-    app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-    
-    // Error handling middleware
-    app.use((err, req, res, next) => {
-      console.error('Error:', err);
-      res.status(500).json({ 
-        success: false, 
-        message: err.message || 'Internal Server Error' 
-      });
-    });
-    
-    // 404 handler
-    app.use((req, res) => {
-      res.status(404).json({ 
-        success: false, 
-        message: 'Route not found' 
-      });
-    });
   })
   .catch((error) => {
     console.error('❌ MongoDB Connection Failed:', error);
-    // Continue running server even if DB fails (for health checks)
+    // continue — routes still available for health/static responses
   });
+
+// Register API routes (register regardless of DB connection)
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/members', require('./routes/memberRoutes'));
+app.use('/api/trainers', require('./routes/trainerRoutes'));
+app.use('/api/classes', require('./routes/classRoutes'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
 
 // ✅ Start server
 const startServer = (startPort, maxAttempts = 5) => {
