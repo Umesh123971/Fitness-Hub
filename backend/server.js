@@ -45,8 +45,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.options('*', cors(corsOptions));
 
-// ✅ Default route (health check)
-app.get('/', (req, res) => {
+// Previously app.get('/') returned JSON which prevents serving index.html in production.
+// Move health route off root to /api/health so static fallback can serve the frontend.
+app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'Welcome to 21C Fitness Hub API',
