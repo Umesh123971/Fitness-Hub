@@ -12,7 +12,17 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: [
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'https://21c-fitness-hub.onrender.com', // Add your frontend URL here (we'll deploy it next)
+    process.env.FRONTEND_URL // Dynamic frontend URL from env
+  ].filter(Boolean), // Remove undefined values
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
