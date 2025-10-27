@@ -24,6 +24,7 @@ const corsOptions = {
     const allowedOrigins = [
       'https://fitness-hub-1.onrender.com',
       'https://21c-fitness-hub.onrender.com',
+      'https://fitnesshub-ldtq.onrender.com',
       process.env.FRONTEND_URL
     ].filter(Boolean);
 
