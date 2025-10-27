@@ -11,7 +11,7 @@ connectDB();
 
 const app = express();
 
-// ✅ BEST SOLUTION: Dynamic CORS Configuration
+// ✅ PRODUCTION-READY CORS Configuration
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const corsOptions = {
@@ -29,17 +29,18 @@ const corsOptions = {
       }
     }
     
-    // In production: Only allow specific origins
+    // In production: Allow specific origins
     const allowedOrigins = [
-      'https://21c-fitness-hub.onrender.com',
-      process.env.FRONTEND_URL
+      'https://fitness-hub-1.onrender.com',  // ✅ Your actual frontend URL
+      'https://21c-fitness-hub.onrender.com', // Alternative frontend URL
+      process.env.FRONTEND_URL // Dynamic from environment variable
     ].filter(Boolean);
     
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     
-    // Reject all other origins
+    console.log(`❌ CORS blocked origin: ${origin}`); // For debugging
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
