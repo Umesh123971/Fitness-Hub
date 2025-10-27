@@ -6,7 +6,7 @@
     "node": "18.x"
   },
   "scripts": {
-    "render-build": "npm --prefix frontend ci && npm --prefix frontend run build && npm --prefix backend ci",
+    "render-build": "npm --prefix frontend install && npm --prefix frontend run build && npm --prefix backend install",
     "start-backend": "npm --prefix backend start"
   }
 }
