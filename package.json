@@ -1,0 +1,12 @@
+{
+  "name": "fitness-hub-root",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "render-build": "npm --prefix frontend ci && npm --prefix frontend run build && npm --prefix backend ci",
+    "start-backend": "npm --prefix backend start"
+  }
+}
