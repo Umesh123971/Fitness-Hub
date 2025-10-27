@@ -4,10 +4,8 @@ const connectDB = async () => {
   try {
     console.log('🔄 Attempting to connect to MongoDB...');
     
-    // Connection options
+    // ✅ Updated: Removed deprecated options
     const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 10000, // 10 seconds
       socketTimeoutMS: 45000, // 45 seconds
     };
@@ -33,7 +31,7 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error.message);
-    throw error; // Throw error to be caught in server.js
+    throw error;
   }
 };
 
