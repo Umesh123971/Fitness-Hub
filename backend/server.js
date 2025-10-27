@@ -9,6 +9,10 @@ dotenv.config();
 
 const app = express();
 
+// <-- add parsers here so req.body is available for all routes
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // ✅ CORS Configuration
 const corsOptions = {
   origin: (origin, callback) => {
