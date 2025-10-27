@@ -1,11 +1,13 @@
 import axios from 'axios'
 
 // Base URL: uses .env variable if available, otherwise defaults to localhost:5000
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_URL_RAW = import.meta.env.VITE_API_URL
+// If VITE_API_URL is explicitly empty or "/", use relative base so calls go to same origin
+const API_BASE =
+  API_URL_RAW === '' || API_URL_RAW === '/' ? '' : (API_URL_RAW || 'http://localhost:5000')
 
-// Create Axios instance - DO NOT add /api here
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },

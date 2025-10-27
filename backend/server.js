@@ -45,41 +45,40 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.options('*', cors(corsOptions));
 
-// Previously app.get('/') returned JSON which prevents serving index.html in production.
-// Move health route off root to /api/health so static fallback can serve the frontend.
+// ---- Register API routes FIRST (always) ----
+app.use('/api/auth', require('./routes/authRoutes'))
+app.use('/api/members', require('./routes/memberRoutes'))
+app.use('/api/trainers', require('./routes/trainerRoutes'))
+app.use('/api/classes', require('./routes/classRoutes'))
+app.use('/api/bookings', require('./routes/bookingRoutes'))
+app.use('/api/payments', require('./routes/paymentRoutes'))
+app.use('/api/dashboard', require('./routes/dashboardRoutes'))
+
+// Health endpoint under /api
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'Welcome to 21C Fitness Hub API',
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString()
-  });
-});
+  })
+})
 
-// Serve frontend build in production
+// ---- Then static serving / SPA fallback (production only) ----
 if (process.env.NODE_ENV === 'production') {
-  const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
-  app.use(express.static(frontendDist));
+  const frontendDist = path.join(__dirname, '..', 'frontend', 'dist')
+  app.use(express.static(frontendDist))
 
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    return res.sendFile(path.join(frontendDist, 'index.html'));
-  });
+    if (req.path.startsWith('/api')) return next()
+    return res.sendFile(path.join(frontendDist, 'index.html'))
+  })
 }
 
 // ✅ Connect to MongoDB
 connectDB()
   .then(() => {
     console.log('✅ MongoDB Connected Successfully');
-
-    // ✅ API routes
-    app.use('/api/auth', require('./routes/authRoutes'));
-    app.use('/api/members', require('./routes/memberRoutes'));
-    app.use('/api/trainers', require('./routes/trainerRoutes'));
-    app.use('/api/classes', require('./routes/classRoutes'));
-    app.use('/api/bookings', require('./routes/bookingRoutes'));
-    app.use('/api/payments', require('./routes/paymentRoutes'));
-    app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
     // ✅ Error handler
     app.use((err, req, res, next) => {
