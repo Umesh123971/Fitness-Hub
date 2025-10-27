@@ -20,30 +20,29 @@ const corsOptions = {
       if (devLocalhostPattern.test(origin)) return callback(null, true);
     }
 
-    // Production: allow only deployed frontend
+    // Production: allow only deployed frontend (read from FRONTEND_URL)
     const allowedOrigins = [
+      process.env.FRONTEND_URL,
       'https://fitness-hub-1.onrender.com',
       'https://21c-fitness-hub.onrender.com',
-      'https://fitnesshub-ldtq.onrender.com',
-      process.env.FRONTEND_URL
+      'https://fitnesshub-ldtq.onrender.com'
     ].filter(Boolean);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    console.log(`⚠️ CORS blocked origin: ${origin}`);
-    callback(null, true);
+    console.warn(`⚠️ CORS blocked origin: ${origin}`);
+    // DENY unknown origins (do not silently allow)
+    return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  methods: ['GET','POST','PUT','DELETE','OPTIONS','PATCH'],
+  allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+  exposedHeaders: ['Content-Range','X-Content-Range'],
   maxAge: 86400
 };
-
 app.use(cors(corsOptions));
-app.use(express.json());
 app.options('*', cors(corsOptions));
 
 // ---- Register API routes FIRST (always) ----
