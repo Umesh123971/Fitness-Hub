@@ -9,21 +9,30 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS Configuration (improved for local dev + explicit preflight handling)
+// ✅ CORS Configuration
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    const devLocalhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
-    if (process.env.NODE_ENV !== 'production' && devLocalhostPattern.test(origin)) {
-      return callback(null, true);
+
+    // Allow localhost during development
+    if (process.env.NODE_ENV !== 'production') {
+      const devLocalhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+      if (devLocalhostPattern.test(origin)) return callback(null, true);
     }
+
+    // Production: allow only deployed frontend
     const allowedOrigins = [
       'https://fitness-hub-1.onrender.com',
       'https://21c-fitness-hub.onrender.com',
       process.env.FRONTEND_URL
     ].filter(Boolean);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'), false);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log(`⚠️ CORS blocked origin: ${origin}`);
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -36,7 +45,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.options('*', cors(corsOptions));
 
-// --- Always-available handlers (health + static) ---
+// ✅ Default route (health check)
 app.get('/', (req, res) => {
   res.json({
     success: true,
@@ -46,7 +55,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// Serve frontend build when in production (single Web Service deploy)
+// Serve frontend build in production
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
   app.use(express.static(frontendDist));
@@ -56,47 +65,55 @@ if (process.env.NODE_ENV === 'production') {
     return res.sendFile(path.join(frontendDist, 'index.html'));
   });
 }
-// --- end always-available handlers ---
 
-// Connect to MongoDB but DO NOT gate route registration on success
+// ✅ Connect to MongoDB
 connectDB()
-  .then(() => console.log('✅ MongoDB Connected Successfully'))
-  .catch((err) => console.error('❌ MongoDB Connection Failed:', err));
+  .then(() => {
+    console.log('✅ MongoDB Connected Successfully');
 
-// Register API routes (register regardless of DB connection)
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/members', require('./routes/memberRoutes'));
-app.use('/api/trainers', require('./routes/trainerRoutes'));
-app.use('/api/classes', require('./routes/classRoutes'));
-app.use('/api/bookings', require('./routes/bookingRoutes'));
-app.use('/api/payments', require('./routes/paymentRoutes'));
-app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+    // ✅ API routes
+    app.use('/api/auth', require('./routes/authRoutes'));
+    app.use('/api/members', require('./routes/memberRoutes'));
+    app.use('/api/trainers', require('./routes/trainerRoutes'));
+    app.use('/api/classes', require('./routes/classRoutes'));
+    app.use('/api/bookings', require('./routes/bookingRoutes'));
+    app.use('/api/payments', require('./routes/paymentRoutes'));
+    app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({
-    success: false,
-    message: err.message || 'Internal Server Error'
+    // ✅ Error handler
+    app.use((err, req, res, next) => {
+      console.error('Error:', err);
+      res.status(500).json({
+        success: false,
+        message: err.message || 'Internal Server Error'
+      });
+    });
+
+    // ✅ 404 handler
+    app.use((req, res) => {
+      res.status(404).json({
+        success: false,
+        message: 'Route not found'
+      });
+    });
+  })
+  .catch((error) => {
+    console.error('❌ MongoDB Connection Failed:', error);
   });
-});
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found'
-  });
-});
-
-// ✅ Start server (keeps existing startServer implementation)
+// ✅ Start server
 const PORT = parseInt(process.env.PORT || '5000', 10);
-let server = null;
-startServer(PORT);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n${'='.repeat(50)}`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🚀 Ready to accept connections`);
+  console.log(`${'='.repeat(50)}\n`);
+});
 
 // ✅ Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('⚠️ SIGTERM received, shutting down gracefully...');
+const shutdown = () => {
+  console.log('⚠️ Shutdown signal received, closing server...');
   if (server) {
     server.close(() => {
       console.log('✅ Server closed');
@@ -105,16 +122,7 @@ process.on('SIGTERM', () => {
   } else {
     process.exit(0);
   }
-});
+};
 
-process.on('SIGINT', () => {
-  console.log('⚠️ SIGINT received, shutting down gracefully...');
-  if (server) {
-    server.close(() => {
-      console.log('✅ Server closed');
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
-  }
-});
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
