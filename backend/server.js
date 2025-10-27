@@ -12,28 +12,17 @@ const app = express();
 // ✅ CORS Configuration (improved for local dev + explicit preflight handling)
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
-
-    // Allow any localhost/127.0.0.1 during development (any port)
     const devLocalhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
     if (process.env.NODE_ENV !== 'production' && devLocalhostPattern.test(origin)) {
       return callback(null, true);
     }
-
-    // Production: Allow specific origins (including FRONTEND_URL)
     const allowedOrigins = [
       'https://fitness-hub-1.onrender.com',
       'https://21c-fitness-hub.onrender.com',
       process.env.FRONTEND_URL
     ].filter(Boolean);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.warn(`⚠️ CORS blocked origin: ${origin}`);
-    // Fail the preflight so you can see the origin in browser console
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
@@ -45,11 +34,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
-
-// Ensure preflight OPTIONS requests get CORS headers immediately
 app.options('*', cors(corsOptions));
 
-// --- Move health route & production static serving OUTSIDE DB gating so we always respond ---
+// --- Always-available handlers (health + static) ---
 app.get('/', (req, res) => {
   res.json({
     success: true,
@@ -59,9 +46,11 @@ app.get('/', (req, res) => {
   });
 });
 
+// Serve frontend build when in production (single Web Service deploy)
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
   app.use(express.static(frontendDist));
+
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     return res.sendFile(path.join(frontendDist, 'index.html'));
@@ -71,13 +60,8 @@ if (process.env.NODE_ENV === 'production') {
 
 // Connect to MongoDB but DO NOT gate route registration on success
 connectDB()
-  .then(() => {
-    console.log('✅ MongoDB Connected Successfully');
-  })
-  .catch((error) => {
-    console.error('❌ MongoDB Connection Failed:', error);
-    // continue — routes still available for health/static responses
-  });
+  .then(() => console.log('✅ MongoDB Connected Successfully'))
+  .catch((err) => console.error('❌ MongoDB Connection Failed:', err));
 
 // Register API routes (register regardless of DB connection)
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -105,43 +89,7 @@ app.use((req, res) => {
   });
 });
 
-// ✅ Start server
-const startServer = (startPort, maxAttempts = 5) => {
-  let attempts = 0;
-  const tryPort = (port) => {
-    attempts++;
-    // assign to outer-scope server so shutdown handlers can use it
-    server = app.listen(port, '0.0.0.0', () => {
-      console.log(`\n${'='.repeat(50)}`);
-      console.log(`✅ Server running on port ${port}`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔓 CORS: Production mode`);
-      console.log(`📊 Database: MongoDB Atlas`);
-      console.log(`🚀 Ready to accept connections`);
-      console.log(`${'='.repeat(50)}\n`);
-    });
-
-    server.on('error', (error) => {
-      if (error.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${port} is already in use`);
-        if (attempts < maxAttempts) {
-          const next = port + 1;
-          console.log(`➡️ Trying port ${next} (${attempts}/${maxAttempts})...`);
-          setTimeout(() => tryPort(next), 300);
-        } else {
-          console.error('❌ No available ports found after retries. Exiting.');
-          process.exit(1);
-        }
-      } else {
-        console.error('❌ Server error:', error);
-        process.exit(1);
-      }
-    });
-  };
-
-  tryPort(startPort);
-};
-
+// ✅ Start server (keeps existing startServer implementation)
 const PORT = parseInt(process.env.PORT || '5000', 10);
 let server = null;
 startServer(PORT);
