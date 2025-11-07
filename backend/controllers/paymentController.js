@@ -77,6 +77,15 @@ exports.createPayment = async (req, res) => {
       });
     }
 
+    // Validate membership type
+    const validTypes = ['Monthly', 'Quarterly', 'Annual'];
+    if (!validTypes.includes(member.membershipType)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid membership type' 
+      });
+    }
+
     // Calculate renewal date based on membership type
     const currentDate = new Date();
     let renewalDate = new Date(currentDate);

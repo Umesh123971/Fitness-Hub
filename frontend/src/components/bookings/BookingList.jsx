@@ -17,7 +17,8 @@ const BookingList = () => {
       const response = await getBookings()
       setBookings(response.data)
     } catch (error) {
-      showToast('Error fetching bookings', 'error')
+      const message = error.response?.data?.message || 'Error fetching bookings'
+      showToast(message, 'error')
     } finally {
       setLoading(false)
     }
@@ -30,7 +31,8 @@ const BookingList = () => {
         showToast('Booking cancelled successfully', 'success')
         fetchBookings()
       } catch (error) {
-        showToast('Error cancelling booking', 'error')
+        const message = error.response?.data?.message || 'Error cancelling booking'
+        showToast(message, 'error')
       }
     }
   }

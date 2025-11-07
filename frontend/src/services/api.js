@@ -1,30 +1,7 @@
 import axios from 'axios'
 
 // Base URL: uses .env variable if available, otherwise defaults to localhost:5000
-const API_URL_RAW = import.meta.env.VITE_API_URL
-
-// Replace existing API_BASE calculation with this runtime-safe version:
-let API_BASE = ''
-if (API_URL_RAW === '' || API_URL_RAW === '/') {
-  API_BASE = ''
-} else if (API_URL_RAW) {
-  API_BASE = API_URL_RAW
-} else {
-  API_BASE = 'http://localhost:5000'
-}
-
-// If running in browser over HTTPS (deployed) and the build injected a localhost HTTP API,
-// prefer same-origin (relative) to avoid mixed-content / wrong-host calls.
-if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-  try {
-    const parsed = new URL(API_BASE, window.location.origin)
-    if (parsed.hostname === 'localhost' || parsed.host.startsWith('localhost')) {
-      API_BASE = ''
-    }
-  } catch (e) {
-    // ignore URL parse errors
-  }
-}
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const api = axios.create({
   baseURL: API_BASE,

@@ -14,6 +14,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ CORS Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3001'];
+
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -24,14 +28,7 @@ const corsOptions = {
       if (devLocalhostPattern.test(origin)) return callback(null, true);
     }
 
-    // Production: allow only deployed frontend (read from FRONTEND_URL)
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      'https://fitness-hub-1.onrender.com',
-      'https://21c-fitness-hub.onrender.com',
-      'https://fitnesshub-ldtq.onrender.com'
-    ].filter(Boolean);
-
+    // Check against allowed origins from environment variable
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }

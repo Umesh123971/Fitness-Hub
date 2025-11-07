@@ -19,7 +19,8 @@ const ClassList = ({ onEdit, onView }) => {
       const response = await getClasses()
       setClasses(response.data)
     } catch (error) {
-      showToast('Error fetching classes', 'error')
+      const message = error.response?.data?.message || 'Error fetching classes'
+      showToast(message, 'error')
     } finally {
       setLoading(false)
     }
@@ -32,7 +33,8 @@ const ClassList = ({ onEdit, onView }) => {
         showToast('Class deleted successfully', 'success')
         fetchClasses()
       } catch (error) {
-        showToast('Error deleting class', 'error')
+        const message = error.response?.data?.message || 'Error deleting class'
+        showToast(message, 'error')
       }
     }
   }

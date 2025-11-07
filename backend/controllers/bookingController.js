@@ -120,7 +120,8 @@ exports.createBooking = async (req, res) => {
       memberId: member._id,
       classId,
       bookingDate,
-      time
+      time,
+      status: 'Confirmed'
     });
 
     // Update class current bookings

@@ -16,7 +16,8 @@ const TrainerList = ({ onEdit, onView }) => {
       const response = await getTrainers()
       setTrainers(response.data)
     } catch (error) {
-      showToast('Error fetching trainers', 'error')
+      const message = error.response?.data?.message || 'Error fetching trainers'
+      showToast(message, 'error')
     } finally {
       setLoading(false)
     }
@@ -29,7 +30,8 @@ const TrainerList = ({ onEdit, onView }) => {
         showToast('Trainer deleted successfully', 'success')
         fetchTrainers()
       } catch (error) {
-        showToast('Error deleting trainer', 'error')
+        const message = error.response?.data?.message || 'Error deleting trainer'
+        showToast(message, 'error')
       }
     }
   }

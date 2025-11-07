@@ -22,7 +22,8 @@ const MemberList = ({ onEdit, onView }) => {
       const response = await getMembers(filters)
       setMembers(response.data)
     } catch (error) {
-      showToast('Error fetching members', 'error')
+      const message = error.response?.data?.message || 'Error fetching members'
+      showToast(message, 'error')
     } finally {
       setLoading(false)
     }
@@ -35,7 +36,8 @@ const MemberList = ({ onEdit, onView }) => {
         showToast('Member deleted successfully', 'success')
         fetchMembers()
       } catch (error) {
-        showToast('Error deleting member', 'error')
+        const message = error.response?.data?.message || 'Error deleting member'
+        showToast(message, 'error')
       }
     }
   }
