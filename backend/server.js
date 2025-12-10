@@ -60,6 +60,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'Welcome to 21C Fitness Hub API',
+    version: '1.0.1',
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString()
   })
