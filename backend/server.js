@@ -28,6 +28,11 @@ const corsOptions = {
       if (devLocalhostPattern.test(origin)) return callback(null, true);
     }
 
+    // Allow any Render.com subdomain (for deployed apps)
+    if (origin && origin.includes('.onrender.com')) {
+      return callback(null, true);
+    }
+
     // Check against allowed origins from environment variable
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
