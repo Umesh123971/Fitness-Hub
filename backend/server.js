@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3001'];
+  : ['http://localhost:5173'];
 
 const corsOptions = {
   origin: (origin, callback) => {
