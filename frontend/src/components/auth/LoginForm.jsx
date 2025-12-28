@@ -72,14 +72,14 @@ const LoginForm = () => {
           </button>
         </form>
 
-        {/* 
+        {
         <div className="mt-6 p-4 bg-gray-50 rounded">
-          <p className="text-sm font-semibold mb-2">Demo Credentials:</p>
+          <p className="text-sm font-semibold mb-2">Demo Credentials/Just for checkout :</p>
           <p className="text-xs text-gray-600">Admin: admin@21cfitness.com / admin123</p>
           <p className="text-xs text-gray-600">Trainer: john.trainer@21cfitness.com / trainer123</p>
           <p className="text-xs text-gray-600">Member: jane.member@21cfitness.com / member123</p>
         </div>
-        */}
+        }
       </div>
     </div>
   )
