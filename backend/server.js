@@ -2,7 +2,6 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
-const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -71,31 +70,6 @@ app.get('/api/health', (req, res) => {
   })
 })
 
-// ---- Serve static files and SPA fallback (production only) ----
-if (process.env.NODE_ENV === 'production') {
-  const frontendDist = path.join(__dirname, '..', 'frontend', 'dist')
-  
-  // Serve static files with proper error handling
-  app.use(express.static(frontendDist, {
-    maxAge: '1d',
-    etag: true
-  }))
-
-  // SPA fallback - serve index.html for non-API routes
-  app.get('*', (req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith('/api')) return next()
-    
-    // Serve index.html for all other routes
-    res.sendFile(path.join(frontendDist, 'index.html'), (err) => {
-      if (err) {
-        console.error('Error serving index.html:', err)
-        res.status(500).send('Error loading application')
-      }
-    })
-  })
-}
-
 // ✅ Error handler (MUST be after all routes)
 app.use((err, req, res, next) => {
   console.error('Error:', err);
@@ -127,9 +101,6 @@ const startServer = async () => {
     server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Server running on port ${PORT} (env: ${process.env.NODE_ENV || 'development'})`);
       console.log(`✅ API available at: http://localhost:${PORT}/api`);
-      if (process.env.NODE_ENV === 'production') {
-        console.log(`✅ Frontend served from: ${path.join(__dirname, '..', 'frontend', 'dist')}`);
-      }
     });
 
     server.on('error', (error) => {
